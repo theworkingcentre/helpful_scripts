@@ -4,23 +4,20 @@
 # Based on
 # https://bytecookie.wordpress.com/2011/12/28/gui-creation-with-powershell-part-2-the-notify-icon-or-how-to-make-your-own-hdd-health-monitor/
 
+# Notes
 # Balloon timing is set in accessibility settings.
 
-[void][System.Reflection.Assembly]::LoadWithPartialName("System.windows.forms")
 
-# Assemblies
-#    try {
-#        Add-Type -AssemblyName "System.Drawing" -ErrorAction Stop
-#        Add-Type -AssemblyName "System.Windows.Forms" -ErrorAction Stop
-#    }
-#    catch [System.UnauthorizedAccessException] {
-#        Write-Warning -Message "Access denied when attempting to load required assemblies" ; break
-#    }
-#    catch [System.Exception] {
-#        Write-Warning -Message "Unable to load required assemblies. Error message: $($_.Exception.Message)" ; break
-#    }
+# Parameters?
+Param()
 
 
+# Assemblies.
+Add-Type -AssemblyName System.Drawing, System.Windows.Forms -ErrorAction Stop
+#[void][System.Reflection.Assembly]::LoadWithPartialName("System.windows.forms")
+
+
+# Version check.
 if($PSVersionTable.PSVersion.Major -ge 3)
 {
         $scope = 2
@@ -31,29 +28,36 @@ else
 }
 
 
+# Time elapsed between balloons.
 $elapsed = 0
+$timeout = 10 # Should be 60 * 30
+
 
 # Determine location of script.
 $ScriptPath = $MyInvocation.MyCommand.Path
 $ScriptDir  = Split-Path -Parent $ScriptPath
 
+
 # Create hidden form.
 $form1 = New-Object System.Windows.Forms.form
+
 
 # Notify icon.
 $NotifyIcon= New-Object System.Windows.Forms.NotifyIcon
 
+
 # Timer to perform announcement.
 $Timer = New-Object System.Windows.Forms.Timer
+
 
 # Temporary icons.
 $iconOK = New-Object System.Drawing.Icon($ScriptDir + "\reminder.ico")
 
 
-
 # Form configuration.
 $form1.ShowInTaskbar = $false
 $form1.WindowState = "minimized"
+
 
 # Icon configuration.
 $NotifyIcon.Icon =  $iconOK
@@ -76,10 +80,10 @@ $Timer.Start()
 
 function CountTime() {
 
-    Set-Variable -Name elapsed -Value ($elapsed + 1) -Scope $scope
     #$elapsed = $elapsed + 1
+    Set-Variable -Name elapsed -Value ($elapsed + 1) -Scope $scope
 
-    if ($elapsed -gt 10) {
+    if ($elapsed -gt $timeout) {
 
       $NotifyIcon.Icon =  $iconOK
 
@@ -116,5 +120,10 @@ Write-Output "Reminder starting..."
 $NotifyIcon.ShowBalloonTip(1000,"Welcome!!","Please be mindful of others waiting to use public computers.",[system.windows.forms.ToolTipIcon]"Info")
 
 
-[void][System.Windows.Forms.Application]::Run($form1)
+# Run
+#[void][System.Windows.Forms.Application]::Run($form1)
 
+
+# Run
+$appContext = New-Object System.Windows.Forms.ApplicationContext
+[void][System.Windows.Forms.Application]::Run($appContext)
